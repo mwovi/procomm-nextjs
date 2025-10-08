@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins, Jura } from "next/font/google";
 import "./globals.css";
+import Providers from "@/components/Providers";
 
 const poppins = Poppins({ 
   subsets: ["latin"],
@@ -70,7 +71,9 @@ export default function RootLayout({
         <link rel="manifest" href="/images/site.webmanifest" />
       </head>
       <body className={`${poppins.className} antialiased`}>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

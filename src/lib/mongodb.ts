@@ -40,3 +40,6 @@ async function dbConnect() {
 }
 
 export default dbConnect;
+
+// Alternative export name for NextAuth compatibility
+export const connectDB = dbConnect;
