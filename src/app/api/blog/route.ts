@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../auth/[...nextauth]/route';
 import dbConnect from '../../../lib/mongodb';
 import BlogPost from '../../../models/BlogPost';
 
@@ -51,6 +53,16 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    
+    if (!session || !session.user || session.user.role !== 'admin') {
+      return NextResponse.json(
+        { message: 'Unauthorized access. Admin authentication required.' },
+        { status: 401 }
+      );
+    }
+
     await dbConnect();
 
     const body = await request.json();

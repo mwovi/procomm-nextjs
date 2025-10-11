@@ -58,7 +58,7 @@ blogPostSchema.pre('save', function(next) {
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
-      .trim('-');
+      .replace(/^-+|-+$/g, ''); // Remove leading and trailing dashes
   }
   
   if (this.published && !this.publishedAt) {

@@ -85,7 +85,7 @@ const AdminLogin = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors text-gray-900"
                 placeholder="admin@procomm.com"
               />
             </div>
@@ -101,7 +101,7 @@ const AdminLogin = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors pr-12 text-gray-900"
                   placeholder="Enter your password"
                 />
                 <button
@@ -133,7 +133,7 @@ const AdminLogin = () => {
           <div className="mt-6 text-center text-sm text-gray-500">
             <p>Default credentials for testing:</p>
             <p className="font-mono text-xs mt-1">
-              admin@procommmedia.com / admin123
+              admin@procomm.com / admin123
             </p>
           </div>
         </div>

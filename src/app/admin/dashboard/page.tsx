@@ -6,9 +6,11 @@ import {
   FileText, 
   ImageIcon, 
   MessageSquare, 
-  Eye
+  Eye,
+  LogOut
 } from 'lucide-react';
 import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 
 import { LucideIcon } from 'lucide-react';
 
@@ -55,6 +57,10 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/admin/login' });
   };
 
   const StatCard = ({ 
@@ -120,10 +126,21 @@ const AdminDashboard = () => {
       <div className="space-y-6">
         {/* Welcome Section */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl text-white p-6">
-          <h1 className="text-2xl font-bold mb-2">Welcome to your Admin Dashboard</h1>
-          <p className="text-blue-100">
-            Manage your content, view analytics, and stay on top of your website&apos;s performance.
-          </p>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-2xl font-bold mb-2">Welcome to your Admin Dashboard</h1>
+              <p className="text-blue-100">
+                Manage your content, view analytics, and stay on top of your website&apos;s performance.
+              </p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 hover:border-white/30 rounded-lg text-white font-medium transition-all duration-200 hover:scale-105"
+            >
+              <LogOut size={18} />
+              <span className="hidden sm:block">Logout</span>
+            </button>
+          </div>
         </div>
 
         {/* Stats Grid */}

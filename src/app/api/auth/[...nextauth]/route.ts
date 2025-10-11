@@ -1,8 +1,5 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { MongoDBAdapter } from '@next-auth/mongodb-adapter'
-import { MongoClient } from 'mongodb'
-import bcrypt from 'bcryptjs'
 import { connectDB } from '@/lib/mongodb'
 
 interface AdminUser {
@@ -12,11 +9,7 @@ interface AdminUser {
   role: string
 }
 
-const client = new MongoClient(process.env.MONGODB_URI!)
-const clientPromise = client.connect()
-
-const handler = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
+export const authOptions = {
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -30,26 +23,28 @@ const handler = NextAuth({
         }
 
         try {
+          // Test database connection
           await connectDB()
+          console.log('✅ Database connected successfully')
           
-          // For now, we'll use a hardcoded admin user
-          // In production, you'd want to store this in the database
-          const adminEmail = process.env.ADMIN_EMAIL || 'admin@procommmedia.com'
+          // Use hardcoded admin credentials for now
+          const adminEmail = process.env.ADMIN_EMAIL || 'admin@procomm.com'
           const adminPassword = process.env.ADMIN_PASSWORD || 'admin123'
 
-          if (credentials.email === adminEmail) {
-            const isValid = await bcrypt.compare(credentials.password, await bcrypt.hash(adminPassword, 12))
-            
-            if (isValid) {
-              return {
-                id: '1',
-                email: adminEmail,
-                name: 'Admin',
-                role: 'admin'
-              } as AdminUser
-            }
+          console.log('Login attempt:', credentials.email)
+          console.log('Expected admin:', adminEmail)
+
+          if (credentials.email === adminEmail && credentials.password === adminPassword) {
+            console.log('✅ Admin login successful')
+            return {
+              id: '1',
+              email: adminEmail,
+              name: 'Admin',
+              role: 'admin'
+            } as AdminUser
           }
 
+          console.log('❌ Invalid credentials')
           return null
         } catch (error) {
           console.error('Auth error:', error)
@@ -59,26 +54,46 @@ const handler = NextAuth({
     })
   ],
   session: {
-    strategy: 'jwt'
+    strategy: 'jwt' as const,
+    maxAge: 24 * 60 * 60, // 24 hours
+    updateAge: 60 * 60, // 1 hour - session will be updated after this time
+  },
+  jwt: {
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   callbacks: {
-    async jwt({ token, user }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user }: any) {
       if (user) {
         token.role = (user as AdminUser).role
+        token.iat = Math.floor(Date.now() / 1000) // Set issued at time
       }
       return token
     },
-    async session({ session, token }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: any) {
       if (token && session.user) {
-        session.user.id = token.sub!
-        session.user.role = token.role as string
+        (session.user as AdminUser).id = token.sub as string
+        ;(session.user as AdminUser).role = token.role as string
       }
       return session
     }
   },
   pages: {
     signIn: '/admin/login'
+  },
+  events: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async signIn({ user }: any) {
+      console.log('User signed in:', (user as AdminUser).email)
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async signOut({ session, token }: any) {
+      console.log('User signed out:', token?.email || (session?.user as AdminUser)?.email)
+    }
   }
-})
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }

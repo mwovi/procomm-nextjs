@@ -1,78 +1,213 @@
 import { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import dbConnect from '@/lib/mongodb';
+import BlogPost from '@/models/BlogPost';
 
 export const metadata: Metadata = {
   title: 'Blog - ProComm Media',
   description: 'Latest insights and articles from ProComm Media on strategic communication, media coordination, and development support.',
 };
 
-const blogPosts = [
-  {
-    id: 1,
-    title: 'Strategic Communication in the Digital Age',
-    excerpt: 'Exploring how organizations can leverage digital platforms for effective strategic communication in today\'s interconnected world.',
-    image: '/images/project1.jpg',
-    date: '2024-10-01',
-    category: 'Communication',
-    readTime: '5 min read',
-    slug: 'strategic-communication-digital-age'
-  },
-  {
-    id: 2,
-    title: 'Building Resilience in Arid and Semi-Arid Areas',
-    excerpt: 'Our experience working with county governments to build resilience against climate challenges through effective communication strategies.',
-    image: '/images/project2.jpg',
-    date: '2024-09-28',
-    category: 'Resilience',
-    readTime: '7 min read',
-    slug: 'building-resilience-arid-areas'
-  },
-  {
-    id: 3,
-    title: 'Media Training Best Practices',
-    excerpt: 'Essential training techniques and tools for developing media skills and building capacity in journalism and communication.',
-    image: '/images/project3.jpg',
-    date: '2024-09-25',
-    category: 'Training',
-    readTime: '4 min read',
-    slug: 'media-training-best-practices'
-  },
-  {
-    id: 4,
-    title: 'Knowledge Management for Organizations',
-    excerpt: 'How effective knowledge management systems can transform organizational learning and decision-making processes.',
-    image: '/images/project4.jpg',
-    date: '2024-09-22',
-    category: 'Knowledge Management',
-    readTime: '6 min read',
-    slug: 'knowledge-management-organizations'
-  },
-  {
-    id: 5,
-    title: 'Public Speaking and Presentation Skills',
-    excerpt: 'Tips and techniques for developing confident public speaking abilities and creating impactful presentations.',
-    image: '/images/project5.jpg',
-    date: '2024-09-20',
-    category: 'Training',
-    readTime: '5 min read',
-    slug: 'public-speaking-presentation-skills'
-  },
-  {
-    id: 6,
-    title: 'Media Coordination in Crisis Communication',
-    excerpt: 'Effective strategies for coordinating media response during crisis situations and emergency communications.',
-    image: '/images/gallery1.jpg',
-    date: '2024-09-18',
-    category: 'Crisis Communication',
-    readTime: '8 min read',
-    slug: 'media-coordination-crisis-communication'
-  }
-];
+// Types for blog data
+interface BlogPostType {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  featuredImage?: string;
+  author: string;
+  publishedAt: Date;
+  tags: string[];
+  views: number;
+}
 
-const categories = ['All', 'Communication', 'Resilience', 'Training', 'Knowledge Management', 'Crisis Communication'];
+// Loading component for blog posts
+function BlogPostsSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {[...Array(6)].map((_, i) => (
+        <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+          <div className="h-48 bg-gray-300"></div>
+          <div className="p-6">
+            <div className="h-4 bg-gray-300 rounded mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded mb-4 w-3/4"></div>
+            <div className="h-3 bg-gray-300 rounded mb-2"></div>
+            <div className="h-3 bg-gray-300 rounded mb-2 w-5/6"></div>
+            <div className="h-3 bg-gray-300 rounded w-4/6"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// Function to fetch blog posts from database
+async function getBlogPosts(page: number = 1, limit: number = 6): Promise<{ posts: BlogPostType[], total: number, pages: number }> {
+  try {
+    await dbConnect();
+    
+    const skip = (page - 1) * limit;
+    
+    // Fetch only published blog posts
+    const posts = await BlogPost
+      .find({ published: true })
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('title slug excerpt featuredImage author publishedAt tags views')
+      .lean();
+    
+    const total = await BlogPost.countDocuments({ published: true });
+    const pages = Math.ceil(total / limit);
+    
+    // Convert MongoDB ObjectId to string and format data
+    const formattedPosts = posts.map(post => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      _id: ((post as any)._id as string).toString(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      title: (post as any).title,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      slug: (post as any).slug,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      excerpt: (post as any).excerpt,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      featuredImage: (post as any).featuredImage || '/images/banner1.jpg', // Default image
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      author: (post as any).author,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      publishedAt: (post as any).publishedAt || (post as any).createdAt,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      tags: (post as any).tags || [],
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      views: (post as any).views || 0
+    }));
+    
+    return {
+      posts: formattedPosts,
+      total,
+      pages
+    };
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    return {
+      posts: [],
+      total: 0,
+      pages: 0
+    };
+  }
+}
+
+// Blog Posts Component
+async function BlogPosts() {
+  const { posts, total } = await getBlogPosts();
+
+  if (posts.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <div className="max-w-md mx-auto">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-medium text-gray-900 mb-2">No blog posts yet</h3>
+          <p className="text-gray-500">Check back soon for insightful articles and updates from our team.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="text-center mb-8">
+        <p className="text-gray-600">
+          {total} {total === 1 ? 'article' : 'articles'} published
+        </p>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {posts.map((post) => (
+          <article
+            key={post._id}
+            className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
+          >
+            <div className="relative h-48">
+              <Image
+                src={post.featuredImage || '/images/banner1.jpg'}
+                alt={post.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+              {post.tags.length > 0 && (
+                <div className="absolute top-4 left-4">
+                  <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
+                    {post.tags[0]}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-6">
+              <div className="flex items-center text-sm text-gray-500 mb-3">
+                <time dateTime={post.publishedAt.toISOString()}>
+                  {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </time>
+                <span className="mx-2">•</span>
+                <span>{post.author}</span>
+                <span className="mx-2">•</span>
+                <span>{post.views} views</span>
+              </div>
+              
+              <h2 className="text-xl font-semibold text-gray-900 mb-3 line-clamp-2">
+                <Link 
+                  href={`/blog/${post.slug}`}
+                  className="hover:text-blue-600 transition-colors duration-200"
+                >
+                  {post.title}
+                </Link>
+              </h2>
+              
+              <p className="text-black mb-4 line-clamp-3">
+                {post.excerpt}
+              </p>
+              
+              <div className="flex items-center justify-between">
+                <Link
+                  href={`/blog/${post.slug}`}
+                  className="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors duration-200"
+                >
+                  Read More →
+                </Link>
+                
+                {post.tags.length > 1 && (
+                  <div className="flex flex-wrap gap-1">
+                    {post.tags.slice(1, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </>
+  );
+}
 
 export default function BlogPage() {
   return (
@@ -97,85 +232,9 @@ export default function BlogPage() {
       {/* Blog Content */}
       <section className="py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Categories Filter */}
-          <div className="flex flex-wrap justify-center gap-4 mb-12">
-            {categories.map((category) => (
-              <button
-                key={category}
-                className="px-6 py-2 rounded-full border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors duration-200"
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
-          {/* Blog Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {blogPosts.map((post) => (
-              <article
-                key={post.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="relative h-48">
-                  <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    className="object-cover"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm">
-                      {post.category}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="p-6">
-                  <div className="flex items-center text-sm text-gray-500 mb-3">
-                    <time dateTime={post.date}>
-                      {new Date(post.date).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                    </time>
-                    <span className="mx-2">•</span>
-                    <span>{post.readTime}</span>
-                  </div>
-                  
-                  <h2 className="text-xl font-semibold mb-3 text-gray-900">
-                    <Link 
-                      href={`/blog/${post.slug}`}
-                      className="hover:text-blue-600 transition-colors duration-200"
-                    >
-                      {post.title}
-                    </Link>
-                  </h2>
-                  
-                  <p className="text-gray-600 mb-4">
-                    {post.excerpt}
-                  </p>
-                  
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium"
-                  >
-                    Read More
-                    <svg className="ml-2 w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {/* Load More Button */}
-          <div className="text-center mt-12">
-            <button className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200">
-              Load More Articles
-            </button>
-          </div>
+          <Suspense fallback={<BlogPostsSkeleton />}>
+            <BlogPosts />
+          </Suspense>
         </div>
       </section>
 

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import nodemailer from 'nodemailer';
+import dbConnect from '@/lib/mongodb';
+import Contact from '@/models/Contact';
 
 const contactSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -17,7 +19,7 @@ export async function POST(request: NextRequest) {
     const validatedData = contactSchema.parse(body);
     
     // Create a transporter (you'll need to configure this with your email provider)
-    const transporter = nodemailer.createTransporter({
+    const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false,
@@ -71,6 +73,32 @@ export async function POST(request: NextRequest) {
         console.error('Email sending failed:', emailError);
         // Don't fail the request if email fails, just log it
       }
+    }
+
+    // Save to database
+    try {
+      await dbConnect();
+
+      // Get client IP and user agent for tracking
+      const forwarded = request.headers.get('x-forwarded-for');
+      const ip = forwarded ? forwarded.split(/, /)[0] : 'unknown';
+      const userAgent = request.headers.get('user-agent') || 'unknown';
+
+      const contact = new Contact({
+        name: validatedData.name,
+        email: validatedData.email,
+        phone: validatedData.phone || undefined,
+        subject: 'Contact Form Submission', // Default subject since contact schema expects it
+        message: validatedData.message,
+        status: 'new',
+        ipAddress: ip,
+        userAgent: userAgent
+      });
+
+      await contact.save();
+    } catch (dbError) {
+      console.error('Database save failed:', dbError);
+      // Don't fail the request if database save fails, just log it
     }
 
     return NextResponse.json(
