@@ -10,6 +10,7 @@ interface AdminUser {
 }
 
 export const authOptions = {
+  debug: process.env.NODE_ENV === 'development',
   providers: [
     CredentialsProvider({
       name: 'credentials',
@@ -61,7 +62,19 @@ export const authOptions = {
   jwt: {
     maxAge: 24 * 60 * 60, // 24 hours
   },
+  pages: {
+    signIn: '/admin/login',
+    error: '/admin/login'
+  },
   callbacks: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async redirect({ url, baseUrl }: any) {
+      // Allows relative callback URLs
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Allows callback URLs on the same origin
+      else if (new URL(url).origin === baseUrl) return url
+      return baseUrl
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async jwt({ token, user }: any) {
       if (user) {
@@ -78,9 +91,6 @@ export const authOptions = {
       }
       return session
     }
-  },
-  pages: {
-    signIn: '/admin/login'
   },
   events: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
