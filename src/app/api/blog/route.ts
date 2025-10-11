@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/route';
 import dbConnect from '../../../lib/mongodb';
 import BlogPost from '../../../models/BlogPost';
+import { invalidateBlogCache } from '@/lib/cache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -86,6 +87,9 @@ export async function POST(request: NextRequest) {
     });
 
     await blogPost.save();
+
+    // Invalidate blog cache to show new content immediately  
+    await invalidateBlogCache();
 
     return NextResponse.json(
       { message: 'Blog post created successfully', post: blogPost },

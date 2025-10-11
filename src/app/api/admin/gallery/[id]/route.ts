@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
 import GalleryImage from '@/models/GalleryImage';
+import { revalidatePath } from 'next/cache';
 import { deleteImage } from '@/lib/cloudinary';
 
 // GET - Fetch single gallery image
@@ -110,6 +111,9 @@ export async function DELETE(
     }
 
     await GalleryImage.findByIdAndDelete(id);
+
+    // Revalidate the gallery page to reflect the deletion
+    revalidatePath('/gallery');
 
     return NextResponse.json({ message: 'Image deleted successfully' });
   } catch (error) {

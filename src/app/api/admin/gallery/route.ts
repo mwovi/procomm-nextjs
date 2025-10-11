@@ -4,6 +4,7 @@ import { authOptions } from '../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
 import GalleryImage from '@/models/GalleryImage';
 import { uploadImage } from '@/lib/cloudinary';
+import { invalidateGalleryCache } from '@/lib/cache';
 
 // GET - Fetch all gallery images for admin
 export async function GET() {
@@ -73,6 +74,9 @@ export async function POST(request: Request) {
     });
 
     const savedImage = await galleryImage.save();
+
+    // Invalidate gallery cache to show new content immediately
+    await invalidateGalleryCache();
 
     return NextResponse.json(savedImage, { status: 201 });
   } catch (error) {

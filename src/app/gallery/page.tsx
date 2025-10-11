@@ -11,6 +11,12 @@ export const metadata: Metadata = {
   description: 'Visual showcase of ProComm Media\'s projects, events, and activities in strategic communication and media coordination.',
 };
 
+// Enable ISR with 60 seconds revalidation
+export const revalidate = 60;
+
+// Force dynamic rendering for admin users
+export const dynamic = 'auto';
+
 // Types for gallery data
 interface GalleryImageType {
   _id: string;

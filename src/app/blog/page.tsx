@@ -12,6 +12,12 @@ export const metadata: Metadata = {
   description: 'Latest insights and articles from ProComm Media on strategic communication, media coordination, and development support.',
 };
 
+// Enable ISR with 60 seconds revalidation
+export const revalidate = 60;
+
+// Force dynamic rendering for admin users
+export const dynamic = 'auto';
+
 // Types for blog data
 interface BlogPostType {
   _id: string;
