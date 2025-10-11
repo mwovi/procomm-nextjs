@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
 import GalleryImage from '@/models/GalleryImage';
+import { uploadImage } from '@/lib/cloudinary';
 
 // GET - Fetch all gallery images for admin
 export async function GET() {
@@ -55,25 +56,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 });
     }
 
-    // Create upload directory if it doesn't exist
-    const uploadDir = './public/uploads/gallery';
-    const fs = await import('fs');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const fileExtension = file.name.split('.').pop();
-    const filename = `gallery-${uniqueSuffix}.${fileExtension}`;
-    const filepath = `${uploadDir}/${filename}`;
-
-    // Save file
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    
-    const { writeFile } = await import('fs/promises');
-    await writeFile(filepath, buffer);
+    // Upload to Cloudinary
+    const imageUrl = await uploadImage(file);
 
     // Create database entry
     await dbConnect();
@@ -81,7 +65,7 @@ export async function POST(request: Request) {
     const galleryImage = new GalleryImage({
       title: title || file.name.split('.')[0],
       description,
-      imageUrl: `/uploads/gallery/${filename}`,
+      imageUrl,
       tags: tags ? tags.split(',').map(tag => tag.trim()) : [],
       category,
       featured: isFeatured,

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '../../../auth/[...nextauth]/route';
 import dbConnect from '@/lib/mongodb';
 import GalleryImage from '@/models/GalleryImage';
+import { deleteImage } from '@/lib/cloudinary';
 
 // GET - Fetch single gallery image
 export async function GET(
@@ -96,6 +97,16 @@ export async function DELETE(
 
     if (!image) {
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+    }
+
+    // Delete from Cloudinary if it's a Cloudinary URL
+    if (image.imageUrl && image.imageUrl.includes('cloudinary.com')) {
+      try {
+        await deleteImage(image.imageUrl);
+      } catch (cloudinaryError) {
+        console.warn('Failed to delete from Cloudinary:', cloudinaryError);
+        // Continue with database deletion even if Cloudinary deletion fails
+      }
     }
 
     await GalleryImage.findByIdAndDelete(id);
