@@ -189,7 +189,7 @@ export default async function BlogPostPage({
       <Header />
 
       {/* Back Button */}
-      <div className="pt-20 pb-4">
+      <div className="pt-24 lg:pt-32 pb-4">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <Link
             href="/blog"

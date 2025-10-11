@@ -147,7 +147,7 @@ export default function ServicesPage() {
       <Header />
       
       {/* Hero Section */}
-      <section className="pt-20 pb-16 bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 relative overflow-hidden">
+      <section className="pt-24 lg:pt-32 pb-16 bg-gradient-to-br from-blue-600 via-purple-700 to-indigo-800 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl" />
