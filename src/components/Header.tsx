@@ -73,18 +73,6 @@ const Header = () => {
                 </Link>
               ))}
               
-              {/* Admin Login Button */}
-              <Link
-                href="/admin/login"
-                className={`px-5 py-3 rounded-xl text-sm font-semibold transition-all duration-300 hover:scale-105 hover:shadow-md flex items-center gap-2 ${
-                  isScrolled || isDarkTextPage
-                    ? 'text-blue-600 hover:bg-gradient-to-r hover:from-blue-600 hover:to-blue-700 hover:text-white shadow-md border border-blue-200 bg-blue-50/80' 
-                    : 'text-blue-200 hover:bg-blue-600 hover:text-white backdrop-blur-sm border border-blue-300 hover:border-blue-100 bg-blue-600/20'
-                }`}
-              >
-                <User size={16} />
-                Admin
-              </Link>
             </div>
           </div>
 
@@ -117,16 +105,6 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
-              
-              {/* Mobile Admin Login */}
-              <Link
-                href="/admin/login"
-                className="block px-4 py-3 text-base font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-xl flex items-center gap-2 border-t border-gray-100 mt-3 pt-4 transition-all duration-300"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                <User size={16} />
-                Admin Login
-              </Link>
             </div>
           </div>
         )}
