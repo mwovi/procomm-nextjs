@@ -52,7 +52,7 @@ const ServicesSection = () => {
           <div className="mb-12 lg:mb-0">
             <div className="relative rounded-lg overflow-hidden shadow-2xl">
               <Image
-                src="https://res.cloudinary.com/dcutc6ix8/image/upload/what_we_offer_h3ypdp.jpg"
+                src="https://res.cloudinary.com/dcutc6ix8/image/upload/v1760551198/facebook_1757684718893_7372264047194910539_yp6u6d.jpg"
                 alt="What We Offer"
                 width={600}
                 height={700}

@@ -10,7 +10,7 @@ const HeroSlider = () => {
 
   const slides = [
     {
-      image: 'https://res.cloudinary.com/dcutc6ix8/image/upload/banner1_w5xchy.jpg',
+      image: 'https://res.cloudinary.com/dcutc6ix8/image/upload/v1760551210/20250425_152208_q7qoqw.jpg',
       title: 'Media coordination and communication assistance',
       subtitle: 'ProComm Media is strategically placed to support individuals and organizations to make the necessary positive shifts. Drawing from our pool of professionals who are well-tested in media and journalism, strategic communication, public speaking and development support communication.',
       cta: 'Get in touch',
@@ -24,7 +24,7 @@ const HeroSlider = () => {
       ctaLink: '/contact'
     },
     {
-      image: 'https://res.cloudinary.com/dcutc6ix8/image/upload/banner3_jpmns9.jpg',
+      image: 'https://res.cloudinary.com/dcutc6ix8/image/upload/v1760551243/20250408_083302_ezkdqa.jpg',
       title: 'Resilience Building',
       subtitle: 'The organization has experience in helping entities prepare for and adapt to environmental challenges and uncertainties, hence its commitment to working with county governments to build resilience in arid and semi-arid areas.',
       cta: 'Get in touch',
